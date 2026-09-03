@@ -1,531 +1,704 @@
 # Novastra Technologies — Cybersecurity Home Lab
 
-A VirtualBox-based cybersecurity home lab designed to demonstrate practical SOC, network security, endpoint monitoring, detection engineering, vulnerability management, and incident investigation workflows.
+A VirtualBox-based cybersecurity home lab designed to demonstrate practical skills in **network security, SOC operations, attack simulation, IDS detection, endpoint monitoring, SIEM correlation, vulnerability management, and incident investigation**.
+
+The environment simulates a small enterprise network containing a firewall/router, attacker workstation, employee endpoint, and dedicated SOC monitoring infrastructure.
+
+---
 
 ## Project Overview
 
-The Novastra Technologies Cybersecurity Home Lab models a small segmented enterprise environment in which security controls are deployed, monitored, tested, and documented.
+The **Novastra Technologies Cybersecurity Home Lab** provides a controlled environment for performing authorized security testing and demonstrating defensive security capabilities.
 
 The lab combines:
 
-- OPNsense firewall/router
-- Kali Linux attack-simulation host
-- Ubuntu employee endpoint
-- Ubuntu Server SOC/Wazuh manager
-- Suricata IDS telemetry
-- Wazuh SIEM/XDR-style monitoring and correlation
-- Custom detection rules
-- Vulnerability-management workflow
-- Incident-investigation workflow
-- Packet-level and host-level evidence
+* Network segmentation
+* Firewall and routing
+* Public Key Infrastructure (PKI)
+* Network Intrusion Detection
+* Security Information and Event Management (SIEM)
+* Endpoint monitoring
+* File Integrity Monitoring (FIM)
+* Attack simulation
+* Vulnerability management
+* Detection engineering
+* Security alert correlation
+* Incident investigation
+* Packet-level network analysis
 
-The objective is not to reproduce a production enterprise network, but to demonstrate the security-engineering lifecycle from network architecture and hardening through detection, vulnerability assessment, and incident investigation.
-
----
-
-## Architecture
-
-### Logical Topology
+The project is structured as a portfolio demonstrating the complete security lifecycle:
 
 ```text
-                         Internet / VirtualBox NAT
-                                  |
-                                  |
-                           [ NT-FW01 ]
-                         OPNsense 26.7
-                          192.168.10.1
-                                  |
-                         LAN / em1
-                                  |
-                         Internal Network
-                             "intnet"
-                                  |
-              +-------------------+-------------------+
-              |                   |                   |
-              |                   |                   |
-        [ NT-KALI01 ]       [ NT-EMP01 ]       [ NT-SOC01 ]
-        Kali Linux           Ubuntu Desktop      Ubuntu Server
-        Attacker             Employee Endpoint   SOC / Wazuh
-        192.168.10.20        192.168.10.30        Wazuh Manager
+Attack Simulation
+       │
+       ▼
+Network / Endpoint Activity
+       │
+       ├──────────────► Suricata IDS
+       │                    │
+       │                    ▼
+       │              EVE JSON Telemetry
+       │                    │
+       │                    ▼
+       │              Wazuh Manager
+       │                    │
+       │                    ▼
+       │          Detection & Correlation
+       │                    │
+       ▼                    ▼
+Endpoint Telemetry ───► Security Alert
+                            │
+                            ▼
+                    SOC Investigation
+                            │
+                            ▼
+                    Evidence / Response
 ```
 
-### Core Components
-
-| Host | Operating System / Platform | Role | Address |
-|---|---|---|---|
-| NT-FW01 | OPNsense 26.7.3_8 | Firewall / Router | 192.168.10.1 |
-| NT-KALI01 | Kali Linux 2026.2 | Attack Simulation | 192.168.10.20 |
-| NT-EMP01 | Ubuntu 24.04.4 Desktop | Employee Endpoint | 192.168.10.30 |
-| NT-SOC01 | Ubuntu Server 24.04.4 | SOC / Wazuh Manager | SOC management host |
-
-> IP assignments documented here reflect the lab configuration used during validation. The SOC host is treated as the monitoring/management component even where packet-level testing focused on traffic between the attacker and employee endpoint.
-
 ---
 
-## Security Monitoring Flow
+# Architecture
+
+The laboratory architecture is documented through four complementary diagrams covering the infrastructure, security controls, SOC detection workflow, and PKI/network-security design.
+
+## 1. Network Topology & Infrastructure
+
+![Novastra Network Topology & Infrastructure](architecture/Network%20Topology%20%26%20Infrastructure.png)
+
+The network is based on a segmented `192.168.10.0/24` internal laboratory network.
+
+### Network Layout
 
 ```text
-Attack / Network Activity
-          |
-          v
-     OPNsense / LAN
-          |
-          v
-       Suricata
-          |
-          | EVE JSON
-          v
-   Wazuh Monitoring
-          |
-          v
-   Detection / Correlation
-          |
-          v
-    SOC Investigation
-          |
-          v
- Assessment / Response / Documentation
+                         Internet
+                            │
+                            ▼
+                   VirtualBox NAT
+                            │
+                            ▼
+                 ┌──────────────────┐
+                 │     NT-FW01      │
+                 │    OPNsense      │
+                 │    Firewall      │
+                 │   192.168.10.1   │
+                 └────────┬─────────┘
+                          │
+                     LAN / em1
+                          │
+                          ▼
+                Internal Network
+                     "intnet"
+                  192.168.10.0/24
+                          │
+          ┌───────────────┼────────────────┐
+          │               │                │
+          ▼               ▼                ▼
+   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+   │ NT-KALI01   │ │ NT-EMP01    │ │ NT-SOC01    │
+   │ Kali Linux  │ │ Ubuntu      │ │ Ubuntu      │
+   │ Attacker    │ │ Employee    │ │ Wazuh SOC   │
+   │ .20         │ │ .30         │ │ SOC Server  │
+   └─────────────┘ └─────────────┘ └─────────────┘
 ```
 
-The lab therefore demonstrates both network-level and endpoint-level telemetry.
+### Virtual Machines
 
----
+| VM            | Operating System       | Role                         | IP Address      |
+| ------------- | ---------------------- | ---------------------------- | --------------- |
+| **NT-FW01**   | OPNsense 26.7          | Firewall / Router            | `192.168.10.1`  |
+| **NT-KALI01** | Kali Linux 2026.2      | Attacker / Attack Simulation | `192.168.10.20` |
+| **NT-EMP01**  | Ubuntu 24.04.4 Desktop | Employee Endpoint            | `192.168.10.30` |
+| **NT-SOC01**  | Ubuntu Server 24.04.4  | SOC / Wazuh Manager          | SOC host        |
 
-# Documentation Chapters
-
-## 01 — Lab Architecture
-
-Defines the overall Novastra Technologies environment, virtualization model, network topology, host roles, addressing, and security boundaries.
-
-**Primary outcome:** A reproducible understanding of how the lab is structured.
-
----
-
-## 02 — Virtualization & Host Deployment
-
-Documents the VirtualBox-based deployment of the security infrastructure and endpoint systems.
-
-**Primary outcome:** Establishes the virtual infrastructure on which the security controls operate.
-
----
-
-## 03 — Network Configuration
-
-Documents interface configuration, addressing, internal networking, routing, and communication paths between the lab components.
-
-**Primary outcome:** Provides the network foundation required for controlled security testing.
-
----
-
-## 04 — Firewall & Gateway Security
-
-Documents the OPNsense firewall/router configuration, rule structure, interface exposure, stateful filtering, and gateway security controls.
-
-**Primary outcome:** Demonstrates enforcement of network security boundaries.
-
----
-
-## 05 — Endpoint Security
-
-Documents the employee endpoint security configuration and the security-relevant telemetry available from the Ubuntu workstation.
-
-**Primary outcome:** Demonstrates host-level security visibility.
-
----
-
-## 06 — Wazuh Deployment
-
-Documents the Wazuh SOC architecture, manager configuration, endpoint-agent deployment, log collection, and security monitoring.
-
-**Primary outcome:** Establishes centralized security monitoring and event analysis.
-
----
-
-## 07 — Suricata IDS
-
-Documents Suricata deployment, inspection configuration, custom detection signatures, EVE JSON telemetry, and packet-level detection.
-
-The custom Suricata rules include laboratory signatures for:
-
-- Kali → EMP01 TCP/3000 activity
-- Kali → EMP01 TCP connection attempts
-- ICMP traffic from Kali to EMP01
-- HTTP GET activity associated with an exploit-style laboratory request
-
-**Primary outcome:** Demonstrates network intrusion detection and custom signature engineering.
-
----
-
-## 08 — SIEM & Detection Engineering
-
-Documents the relationship between Suricata telemetry and Wazuh, including event parsing, custom Wazuh rules, alert levels, and SOC-oriented correlation.
-
-Custom Wazuh correlation includes:
-
-- Base Suricata alert handling
-- Attacker-to-employee correlation
-- Elevated severity for traffic targeting TCP/3000
-
-**Primary outcome:** Demonstrates transformation of raw telemetry into actionable security detections.
-
----
-
-## 09 — Security Validation & Attack Simulation
-
-Documents controlled security-testing activity performed from the Kali attack-simulation host against the designated employee endpoint.
-
-Validation focuses on:
-
-- Network reachability
-- TCP connection behavior
-- ICMP activity
-- Application-layer traffic
-- Suricata detection
-- Wazuh event visibility
-- Evidence correlation
-
-**Primary outcome:** Demonstrates that configured controls can observe and identify authorized laboratory activity.
-
----
-
-## 10 — Security Monitoring & SOC Operations
-
-Documents operational monitoring concepts, event review, alert interpretation, evidence handling, and the workflow used by the simulated SOC environment.
-
-**Primary outcome:** Demonstrates practical SOC monitoring rather than isolated security-tool configuration.
-
----
-
-## 11 — Vulnerability Management
-
-Documents the vulnerability-management lifecycle used by the lab:
+### VirtualBox Network Configuration
 
 ```text
-Identify
-   |
-   v
-Assess
-   |
-   v
-Prioritize
-   |
-   v
-Remediate
-   |
-   v
-Validate
-   |
-   v
-Document
+Adapter 1
+   │
+   └── NAT
+        │
+        ▼
+   Internet Access
+
+Adapter 2
+   │
+   └── Internal Network: intnet
+        │
+        └── 192.168.10.0/24
 ```
 
-The chapter covers vulnerability discovery, severity assessment, remediation planning, validation, and risk-based prioritization.
-
-Where live repository/package verification was not available from the OPNsense environment, the documentation preserves the distinction between validated configuration evidence and assessment methodology rather than treating an unavailable package feed as a confirmed vulnerability.
-
-**Primary outcome:** Demonstrates a structured vulnerability-management process.
+The firewall provides the boundary between the virtualized environment's NAT connectivity and the isolated internal laboratory network.
 
 ---
 
-## 12 — Incident Investigation
+# 2. Security Architecture — Defense, Telemetry & Detection Flow
 
-Documents the investigation workflow used to analyze a security event from available network and SIEM telemetry.
+![Novastra Security Architecture](architecture/Security%20Architecture%20%E2%80%94%20Defense%2C%20Telemetry%20%26%20Detection%20Flow.png)
 
-The investigation follows:
+The security architecture demonstrates how network and endpoint activity are collected, inspected, correlated, and presented to the SOC.
 
 ```text
-Alert
-  |
-  v
-Triage
-  |
-  v
-Evidence Collection
-  |
-  v
-Timeline Construction
-  |
-  v
+                 ┌──────────────────────┐
+                 │     NT-KALI01        │
+                 │ Attack Simulation    │
+                 │ 192.168.10.20        │
+                 └──────────┬───────────┘
+                            │
+                       Test Traffic
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │      NT-FW01         │
+                 │      OPNsense        │
+                 │    192.168.10.1      │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │      Suricata        │
+                 │      Network IDS     │
+                 └──────────┬───────────┘
+                            │
+                       EVE JSON
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │      NT-SOC01        │
+                 │   Wazuh Manager      │
+                 │       SIEM/SOC       │
+                 └──────────┬───────────┘
+                            │
+                 Detection / Correlation
+                            │
+                            ▼
+                      SOC Alert
+                            │
+                            ▼
+                     Investigation
+```
+
+At the endpoint layer:
+
+```text
+NT-EMP01
+Ubuntu Endpoint
+192.168.10.30
+      │
+      ├── Authentication Events
+      ├── File Activity
+      ├── Process Activity
+      ├── System Events
+      └── Security Telemetry
+               │
+               ▼
+          Wazuh Agent
+               │
+               ▼
+        Wazuh Manager
+```
+
+This creates two complementary monitoring paths:
+
+**Network telemetry**
+
+```text
+Network Traffic
+      ↓
+  Suricata IDS
+      ↓
+   EVE JSON
+      ↓
+Wazuh Integration
+      ↓
+Detection / Correlation
+```
+
+**Endpoint telemetry**
+
+```text
+Endpoint Activity
+      ↓
+ Wazuh Agent
+      ↓
+Wazuh Manager
+      ↓
+Detection / Correlation
+```
+
+---
+
+# 3. SOC Detection Pipeline — Attack to Alert
+
+![Novastra SOC Detection Pipeline](architecture/SOC%20Detection%20Pipeline%20%E2%80%94%20Attack%20to%20Alert.png)
+
+The detection pipeline demonstrates how controlled attack activity becomes actionable security telemetry.
+
+```text
+┌──────────────────────┐
+│   Attack Simulation  │
+│      NT-KALI01       │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ Network / Endpoint   │
+│      Activity        │
+└──────────┬───────────┘
+           │
+      ┌────┴────┐
+      │         │
+      ▼         ▼
+┌───────────┐ ┌───────────────┐
+│ Suricata  │ │ Wazuh Agent  │
+│    IDS    │ │   Endpoint   │
+└─────┬─────┘ └───────┬───────┘
+      │               │
+      ▼               ▼
+┌─────────────────────────────┐
+│       Wazuh Manager         │
+│     SOC / SIEM Platform     │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│ Detection & Correlation     │
+│                             │
+│ Suricata Rules:             │
+│ 1000001 – 1000004           │
+│                             │
+│ Wazuh Rules:                │
+│ 100100 – 100102             │
+│                             │
+│ SSH Brute Force Detection   │
+└──────────────┬──────────────┘
+               │
+               ▼
+        ┌──────────────┐
+        │ SOC Alert    │
+        └──────┬───────┘
+               │
+               ▼
+        ┌──────────────┐
+        │ Investigation│
+        └──────────────┘
+```
+
+## Detection Engineering
+
+The lab contains custom Suricata rules designed specifically for the controlled environment.
+
+### Suricata Custom Rules
+
+| SID       | Detection                               |
+| --------- | --------------------------------------- |
+| `1000001` | Kali → EMP01 TCP/3000 SYN activity      |
+| `1000002` | Kali → EMP01 TCP connection             |
+| `1000003` | ICMP traffic from Kali to EMP01         |
+| `1000004` | Possible HTTP exploit-style GET request |
+
+The rules are located in:
+
+```text
+detection-rules/
+└── suricata/
+    └── novastra_suricata.rules
+```
+
+### Wazuh Correlation Rules
+
+| Rule ID  | Purpose                          | Level |
+| -------- | -------------------------------- | ----: |
+| `100100` | Base Suricata alert              |     5 |
+| `100101` | Kali → EMP01 correlation         |     8 |
+| `100102` | Destination TCP/3000 correlation |     9 |
+
+The Wazuh rules are located in:
+
+```text
+detection-rules/
+└── wazuh/
+    └── novastra_suricata_wazuh_rules.xml
+```
+
+The SSH brute-force detection rule is also maintained separately:
+
+```text
+detection-rules/
+└── wazuh/
+    └── 100100-ssh-bruteforce.xml
+```
+
+---
+
+# 4. PKI & Network Security Architecture
+
+![PKI & Network Security Architecture](architecture/PKI%20%26%20Network%20Security%20Architecture.png)
+
+The PKI architecture documents the conceptual trust model used to support secure communications within the laboratory.
+
+```text
+                  ┌─────────────────────┐
+                  │    Root / Lab CA    │
+                  │   Trusted Authority  │
+                  └──────────┬──────────┘
+                             │
+                     Certificate Trust
+                             │
+             ┌───────────────┼────────────────┐
+             │               │                │
+             ▼               ▼                ▼
+       ┌───────────┐   ┌───────────┐   ┌───────────┐
+       │ NT-FW01   │   │ NT-SOC01  │   │ NT-EMP01  │
+       │ OPNsense  │   │ Wazuh SOC │   │ Endpoint  │
+       └───────────┘   └───────────┘   └───────────┘
+```
+
+The repository documents the **architecture and security model** rather than storing private cryptographic material.
+
+---
+
+# Security Controls
+
+The laboratory implements multiple defensive controls across different layers.
+
+| Security Layer           | Technology             | Purpose                                |
+| ------------------------ | ---------------------- | -------------------------------------- |
+| Network Boundary         | OPNsense               | Firewalling and routing                |
+| Network IDS              | Suricata               | Network traffic inspection             |
+| SIEM / SOC               | Wazuh                  | Centralized monitoring and correlation |
+| Endpoint Monitoring      | Wazuh Agent            | Endpoint telemetry                     |
+| File Integrity           | Wazuh FIM              | Detect unauthorized file changes       |
+| Vulnerability Management | Wazuh                  | Vulnerability assessment               |
+| Packet Analysis          | Network captures       | Network-level evidence                 |
+| Detection Engineering    | Custom rules           | Environment-specific detections        |
+| PKI                      | Lab trust architecture | Secure communications / trust model    |
+
+---
+
+# Attack Simulation
+
+The lab includes controlled attack simulations from **NT-KALI01** against the employee endpoint.
+
+The attack-simulation workflow includes:
+
+```text
+NT-KALI01
+192.168.10.20
+     │
+     ├── Network Reconnaissance
+     ├── Service Enumeration
+     ├── Web Reconnaissance
+     ├── Authentication Testing
+     ├── SSH Brute-Force Simulation
+     ├── HTTP Testing
+     └── SQL Injection Testing
+             │
+             ▼
+          NT-EMP01
+        192.168.10.30
+```
+
+All testing is performed inside the controlled laboratory environment.
+
+---
+
+# Network Evidence
+
+Packet captures were used to validate actual communication between laboratory systems.
+
+One observed communication path was:
+
+```text
+192.168.10.20
+      │
+      │ TCP
+      │ Destination Port: 3000
+      ▼
+192.168.10.30
+```
+
+The captured traffic included:
+
+* ARP resolution
+* TCP SYN
+* TCP SYN/ACK
+* TCP ACK
+* Application payload
+* TCP FIN
+* Session termination
+
+Additional HTTPS traffic was observed between:
+
+```text
+192.168.10.1  →  192.168.10.30
+```
+
+This packet-level evidence provides validation of the network architecture and detection-engineering test cases.
+
+---
+
+# Wazuh SOC
+
+**NT-SOC01** functions as the centralized SOC monitoring server.
+
+The Wazuh deployment provides:
+
+* Security event collection
+* Endpoint monitoring
+* File Integrity Monitoring
+* Authentication monitoring
+* Vulnerability management
+* Security alert generation
+* Custom detection rules
+* Event correlation
+* SOC investigation capabilities
+
+The employee endpoint **NT-EMP01** runs the Wazuh Agent and forwards relevant security telemetry to the SOC infrastructure.
+
+---
+
+# File Integrity Monitoring
+
+File Integrity Monitoring is used to identify changes to monitored files and directories.
+
+The FIM workflow is:
+
+```text
+File / Directory
+       │
+       ▼
+ Wazuh Agent
+       │
+       ▼
+Change Detection
+       │
+       ▼
+Wazuh Manager
+       │
+       ▼
+Security Alert
+       │
+       ▼
+SOC Investigation
+```
+
+The repository contains evidence demonstrating FIM testing and alert generation.
+
+---
+
+# Vulnerability Management
+
+The vulnerability-management phase evaluates the laboratory endpoints for known security weaknesses and provides a defensive assessment workflow.
+
+The documented process includes:
+
+```text
+Endpoint
+   │
+   ▼
+Vulnerability Assessment
+   │
+   ▼
+Detected Vulnerabilities
+   │
+   ▼
+Risk Review
+   │
+   ▼
+Remediation / Hardening
+   │
+   ▼
+Validation
+```
+
+Evidence and documentation for the vulnerability-management phase are available under:
+
+```text
+docs/11-vulnerability-management.md
+```
+
+---
+
+# Incident Investigation
+
+The laboratory also demonstrates a basic SOC incident-investigation workflow.
+
+```text
+Security Event
+      │
+      ▼
+Alert Generation
+      │
+      ▼
+Initial Triage
+      │
+      ▼
+Source / Destination Analysis
+      │
+      ▼
+Network / Endpoint Evidence
+      │
+      ▼
 Event Correlation
-  |
-  v
-Impact Assessment
-  |
-  v
-Conclusion
-  |
-  v
-Lessons Learned
+      │
+      ▼
+Determine Attack Activity
+      │
+      ▼
+Document Findings
 ```
 
-The documented investigation uses Suricata EVE JSON and Wazuh alert evidence to reconstruct an observed laboratory event involving:
-
-- Source: `192.168.10.20`
-- Destination: `192.168.10.30`
-- Destination port: `3000/TCP`
-- Suricata signature ID: `1000001`
-- Wazuh correlation rule: `100102`
-- Event classification: controlled laboratory security activity
-
-**Primary outcome:** Demonstrates an end-to-end incident-investigation methodology using correlated network and SIEM evidence.
-
----
-
-# Evidence Model
-
-The project separates evidence into several layers.
-
-### Network Evidence
-
-Captured through OPNsense and packet-level observation.
-
-Examples include:
-
-- ARP resolution
-- TCP SYN / SYN-ACK / ACK
-- Application payloads
-- Connection termination
-- HTTPS traffic
-
-### IDS Evidence
-
-Generated through Suricata EVE JSON.
-
-Important fields include:
+Relevant investigation documentation is available under:
 
 ```text
-timestamp
-event_type
-in_iface
-src_ip
-src_port
-dest_ip
-dest_port
-proto
-alert.signature
-alert.signature_id
-alert.severity
-alert.action
-flow
-```
-
-### SIEM Evidence
-
-Collected and correlated through Wazuh.
-
-Important fields include:
-
-```text
-timestamp
-rule.id
-rule.level
-rule.description
-agent.name
-agent.ip
-data.src_ip / srcip
-data.dest_ip
-data.dest_port
-full_log
-decoder.name
-location
-```
-
-### Host Evidence
-
-Collected from monitored endpoints and SOC infrastructure.
-
-Examples include:
-
-- SSH authentication events
-- PAM session events
-- sudo activity
-- package-management events
-- system logs
-- Wazuh agent telemetry
-
----
-
-# Detection Engineering
-
-The project uses two complementary detection layers.
-
-## Suricata Rules
-
-Suricata operates at the network-inspection layer.
-
-Example laboratory signature:
-
-```text
-alert tcp 192.168.10.20 any -> 192.168.10.30 3000
-(msg:"NOVASTRA LAB Kali to EMP01 TCP/3000 activity";
-flags:S;
-sid:1000001;)
-```
-
-This identifies a TCP SYN attempt from the designated attack-simulation host to TCP/3000 on the employee endpoint.
-
-## Wazuh Rules
-
-Wazuh operates at the event-analysis and correlation layer.
-
-The custom rules raise the significance of relevant Suricata events and associate them with the lab's known attacker and employee hosts.
-
-This creates a layered detection architecture:
-
-```text
-Packet
-  |
-  v
-Suricata Signature
-  |
-  v
-EVE JSON Event
-  |
-  v
-Wazuh Decoder
-  |
-  v
-Wazuh Rule
-  |
-  v
-SOC Alert
-  |
-  v
-Investigation
+docs/12-incident-investigation.md
 ```
 
 ---
 
-# Incident Investigation Model
-
-A repeatable investigation should answer five questions:
-
-1. **What happened?**
-2. **When did it happen?**
-3. **Which host initiated the activity?**
-4. **Which host or service was targeted?**
-5. **What evidence supports the conclusion?**
-
-For the documented laboratory scenario:
-
-| Investigation Field | Finding |
-|---|---|
-| Event | TCP activity targeting TCP/3000 |
-| Source | 192.168.10.20 / NT-KALI01 |
-| Destination | 192.168.10.30 / NT-EMP01 |
-| Protocol | TCP |
-| Destination Port | 3000 |
-| Suricata Signature | 1000001 |
-| Wazuh Rule | 100102 |
-| Detection Severity | Wazuh level 9 |
-| Network Interface | em1 |
-| Classification | Controlled laboratory activity |
-
-The investigation demonstrates how an analyst can correlate a network IDS event with centralized SIEM telemetry instead of treating an alert as an isolated indicator.
-
----
-
-# Security Controls Demonstrated
-
-| Security Domain | Control / Capability |
-|---|---|
-| Network Security | Segmented internal network |
-| Perimeter Security | OPNsense firewall |
-| Stateful Filtering | PF state table |
-| Management Security | SSH access control |
-| Network IDS | Suricata |
-| SIEM | Wazuh |
-| Endpoint Monitoring | Wazuh agent |
-| Detection Engineering | Custom Suricata rules |
-| Event Correlation | Custom Wazuh rules |
-| Vulnerability Management | Risk-based assessment workflow |
-| Incident Response | Evidence-driven investigation |
-| Evidence Collection | Packet, IDS, SIEM, and host telemetry |
-
----
-
-# Project Validation Philosophy
-
-The lab follows a security-engineering approach rather than simply installing tools.
-
-Each major control is documented through:
-
-1. **Configuration**
-2. **Deployment**
-3. **Validation**
-4. **Evidence**
-5. **Interpretation**
-
-This makes the project suitable for demonstrating practical understanding of security operations, network defense, monitoring, and investigation.
-
----
-
-# Final Project Outcome
-
-The completed Novastra Technologies Cybersecurity Home Lab demonstrates a complete defensive security workflow:
+# Repository Structure
 
 ```text
-Architecture
-     |
-     v
-Network Segmentation
-     |
-     v
-Firewall Enforcement
-     |
-     v
-Endpoint Monitoring
-     |
-     v
-Network Detection
-     |
-     v
-SIEM Collection
-     |
-     v
-Detection Engineering
-     |
-     v
-Security Validation
-     |
-     v
-Vulnerability Management
-     |
-     v
-Incident Investigation
-```
-
-The project therefore functions as a cohesive SOC/security-engineering portfolio rather than a collection of unrelated tool demonstrations.
-
----
-
-# Directory Structure
-
-```text
-Novastra-Technologies-Cybersecurity-Home-Lab/
+Novastra-Cybersecurity-Home-Lab/
 │
 ├── README.md
+├── .gitignore
 │
-├── 01-lab-architecture.md
-├── 02-virtualization-and-host-deployment.md
-├── 03-network-configuration.md
-├── 04-firewall-and-gateway-security.md
-├── 05-endpoint-security.md
-├── 06-wazuh-deployment.md
-├── 07-suricata-ids.md
-├── 08-siem-and-detection-engineering.md
-├── 09-security-validation-and-attack-simulation.md
-├── 10-security-monitoring-and-soc-operations.md
-├── 11-vulnerability-management.md
-└── 12-incident-investigation.md
+├── architecture/
+│   ├── Network Topology & Infrastructure.png
+│   ├── PKI & Network Security Architecture.png
+│   ├── Security Architecture — Defense, Telemetry & Detection Flow.png
+│   └── SOC Detection Pipeline — Attack to Alert.png
+│
+├── detection-rules/
+│   ├── suricata/
+│   │   ├── novastra_suricata.rules
+│   │   └── suricata_eve.json
+│   │
+│   └── wazuh/
+│       ├── 100100-ssh-bruteforce.xml
+│       ├── novastra_suricata_wazuh_rules.xml
+│       └── wazuh_alert.json
+│
+├── docs/
+│   ├── 01-project-overview.md
+│   ├── 02-lab-requirements.md
+│   ├── 03-network-architecture.md
+│   ├── 04-network-security-and-pki.md
+│   ├── 05-wazuh-soc.md
+│   ├── 06-endpoint-monitoring.md
+│   ├── 07-fim.md
+│   ├── 08-attack-simulation.md
+│   ├── 09-detection-engineering.md
+│   ├── 10-suricata.md
+│   ├── 11-vulnerability-management.md
+│   └── 12-incident-investigation.md
+│
+└── screenshots/
+    ├── FIM-Test.png
+    ├── phase-2-reconnaissance-nmap.png
+    ├── phase-2-ssh-authentication-telemetry.png
+    ├── phase-2-ssh-authentication-test.png
+    ├── phase-2-web-reconnaissance-nikto.png
+    ├── phase-3-wazuh-ssh-bruteforce-alert.png
+    ├── phase2-authentication-testing-ffuf.png
+    ├── phase2-burp-http-history.png
+    ├── phase2-sqlmap-products-search_P1.png
+    ├── phase2-sqlmap-products-search_P2.png
+    ├── phase3-ssh-bruteforce-wazuh-detection.png
+    ├── phase3-wazuh-ssh-bruteforce-P1.png
+    ├── phase3-wazuh-ssh-bruteforce-P2.png
+    ├── phase3-wazuh-sudo-detection-P1.png
+    ├── phase3-wazuh-sudo-detection-P2.png
+    ├── phase3-wazuh-sudo-detection-P3.png
+    ├── phase3-wazuh-sudo-detection-P4.png
+    ├── phase3-wazuh-suspicious-command.png
+    ├── vulnerability-management-emp01-P1.png
+    ├── vulnerability-management-emp01-P2.png
+    ├── vulnerability-management-emp01-P3.png
+    ├── vulnerability-management-soc01-P1.png
+    ├── vulnerability-management-soc01-P2.png
+    ├── vulnerability-management-soc01-P3.png
+    └── vulnerability-management-soc01-P4.png
 ```
-
-Additional evidence directories may contain configuration artifacts, detection rules, logs, packet captures, and supporting validation material.
 
 ---
 
-# Conclusion
+# Documentation
 
-Novastra Technologies Cybersecurity Home Lab provides a controlled environment for demonstrating defensive cybersecurity capabilities across network security, endpoint monitoring, intrusion detection, SIEM operations, detection engineering, vulnerability management, and incident investigation.
+Detailed documentation is organized into individual chapters:
 
-The final twelve chapters document the environment from initial architecture through the investigation of security events, providing a coherent technical record of the lab's design, implementation, validation, and operational security workflow.
+| Document                         | Topic                           |
+| -------------------------------- | ------------------------------- |
+| `01-project-overview.md`         | Project objectives and scope    |
+| `02-lab-requirements.md`         | Hardware/software requirements  |
+| `03-network-architecture.md`     | Network topology and addressing |
+| `04-network-security-and-pki.md` | Network security and PKI        |
+| `05-wazuh-soc.md`                | Wazuh SOC implementation        |
+| `06-endpoint-monitoring.md`      | Endpoint monitoring             |
+| `07-fim.md`                      | File Integrity Monitoring       |
+| `08-attack-simulation.md`        | Controlled attack simulations   |
+| `09-detection-engineering.md`    | Detection development           |
+| `10-suricata.md`                 | Suricata IDS                    |
+| `11-vulnerability-management.md` | Vulnerability assessment        |
+| `12-incident-investigation.md`   | SOC investigation workflow      |
+
+---
+
+# Technology Stack
+
+### Infrastructure
+
+* VirtualBox
+* OPNsense 26.7
+* Ubuntu Server 24.04.4
+* Ubuntu Desktop 24.04.4
+* Kali Linux 2026.2
+
+### Security
+
+* Wazuh 4.14.7
+* Wazuh Agent
+* Suricata
+* Custom Suricata rules
+* Custom Wazuh rules
+* File Integrity Monitoring
+* Vulnerability Management
+* PKI / TLS concepts
+
+### Analysis
+
+* Packet capture analysis
+* Network traffic inspection
+* Security-event correlation
+* SOC alert investigation
+* Attack-simulation telemetry
+
+---
+
+# Project Goals
+
+The primary goals of the Novastra Technologies Cybersecurity Home Lab are to demonstrate practical understanding of:
+
+1. Enterprise-style network segmentation
+2. Firewall configuration and network security
+3. SOC architecture
+4. SIEM deployment and monitoring
+5. Network intrusion detection
+6. Endpoint security monitoring
+7. File Integrity Monitoring
+8. Vulnerability management
+9. Attack simulation
+10. Detection engineering
+11. Security-event correlation
+12. Packet-level investigation
+13. Incident investigation
+14. Security documentation
+
+---
+
+# Disclaimer
+
+This project is an **authorized cybersecurity laboratory environment** created for education, testing, research, and portfolio demonstration.
+
+All attack simulations and security testing activities are performed against systems owned and controlled within the laboratory environment.
