@@ -63,7 +63,7 @@ The laboratory architecture is documented through four complementary diagrams co
 
 ## 1. Network Topology & Infrastructure
 
-![Novastra Network Topology & Infrastructure](architecture/Network%20Topology%20%26%20Infrastructure.png)
+![Network Topology](architecture/01-network-topology.png)
 
 The network is based on a segmented `192.168.10.0/24` internal laboratory network.
 
@@ -133,7 +133,7 @@ The firewall provides the boundary between the virtualized environment's NAT con
 
 # 2. Security Architecture — Defense, Telemetry & Detection Flow
 
-![Novastra Security Architecture](architecture/Security%20Architecture%20%E2%80%94%20Defense%2C%20Telemetry%20%26%20Detection%20Flow.png)
+![Security Architecture](architecture/02-security-architecture.png)
 
 The security architecture demonstrates how network and endpoint activity are collected, inspected, correlated, and presented to the SOC.
 
@@ -229,7 +229,7 @@ Detection / Correlation
 
 # 3. SOC Detection Pipeline — Attack to Alert
 
-![Novastra SOC Detection Pipeline](architecture/SOC%20Detection%20Pipeline%20%E2%80%94%20Attack%20to%20Alert.png)
+![SOC Detection Pipeline](architecture/03-soc-detection-pipeline.png)
 
 The detection pipeline demonstrates how controlled attack activity becomes actionable security telemetry.
 
@@ -332,7 +332,7 @@ detection-rules/
 
 # 4. PKI & Network Security Architecture
 
-![PKI & Network Security Architecture](architecture/PKI%20%26%20Network%20Security%20Architecture.png)
+![PKI & Network Security Architecture](architecture/04-pki-network-security.png)
 
 The PKI architecture documents the conceptual trust model used to support secure communications within the laboratory.
 
