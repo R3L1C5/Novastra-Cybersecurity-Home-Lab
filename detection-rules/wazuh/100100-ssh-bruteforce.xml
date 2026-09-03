@@ -1,0 +1,13 @@
+<!-- Novastra Technologies: SSH brute-force detection -->
+<group name="local,syslog,sshd,">
+
+  <rule id="100100" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>5760</if_matched_sid>
+    <description>Novastra SOC: Possible SSH brute-force attack detected - 5 failed authentication attempts within 60 seconds.</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failed,brute_force,mitre_t1110,</group>
+  </rule>
+
+</group>

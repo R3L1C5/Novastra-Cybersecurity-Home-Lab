@@ -1,0 +1,26 @@
+<!-- Novastra Technologies Cybersecurity Home Lab
+     Wazuh XML correlation rules for Suricata EVE JSON alerts.
+     Suggested location: /var/ossec/etc/rules/novastra_suricata_wazuh_rules.xml
+-->
+<group name="suricata,novastra,">
+
+  <rule id="100100" level="5">
+    <decoded_as>json</decoded_as>
+    <field name="event_type">alert</field>
+    <description>Suricata generated an alert</description>
+  </rule>
+
+  <rule id="100101" level="8">
+    <if_sid>100100</if_sid>
+    <field name="src_ip">192.168.10.20</field>
+    <field name="dest_ip">192.168.10.30</field>
+    <description>Novastra: Suricata alert from attacker/test host to employee endpoint</description>
+  </rule>
+
+  <rule id="100102" level="9">
+    <if_sid>100100</if_sid>
+    <field name="dest_port">3000</field>
+    <description>Novastra: Suricata detected traffic to TCP/3000</description>
+  </rule>
+
+</group>

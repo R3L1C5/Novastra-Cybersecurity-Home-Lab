@@ -1,0 +1,12 @@
+# Novastra Technologies Cybersecurity Home Lab
+# Suricata custom IDS signatures
+# Network: 192.168.10.0/24
+# Laboratory detection rules; locally assigned SIDs.
+
+alert tcp 192.168.10.20 any -> 192.168.10.30 3000 (msg:"NOVASTRA LAB Kali to EMP01 TCP/3000 activity"; flags:S; sid:1000001; rev:1;)
+
+alert tcp 192.168.10.20 any -> 192.168.10.30 any (msg:"NOVASTRA LAB Kali TCP connection to EMP01"; flags:S; sid:1000002; rev:1;)
+
+alert icmp 192.168.10.20 any -> 192.168.10.30 any (msg:"NOVASTRA LAB ICMP from Kali to EMP01"; itype:8; sid:1000003; rev:1;)
+
+alert tcp 192.168.10.20 any -> 192.168.10.30 any (msg:"NOVASTRA LAB Possible HTTP exploit-style request from Kali"; flow:to_server,established; content:"GET"; http_method; sid:1000004; rev:1;)

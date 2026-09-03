@@ -1,0 +1,53 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Logs
+*.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Private keys / certificates
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Virtual machine disks
+*.vdi
+*.vmdk
+*.vhd
+*.vhdx
+*.qcow2
+
+# VirtualBox temporary files
+*.sav
+*.lck/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node dependencies
+node_modules/
+
+# Build output
+dist/
+build/

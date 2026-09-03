@@ -1,0 +1,35 @@
+{
+  "_simulation_notice": "SIMULATED EVIDENCE - NOT A LIVE SURICATA RUNTIME RECORD",
+  "timestamp": "2026-09-01T19:15:42.183921+0530",
+  "flow_id": 1000001000001,
+  "in_iface": "em1",
+  "event_type": "alert",
+  "src_ip": "192.168.10.20",
+  "src_port": 43368,
+  "dest_ip": "192.168.10.30",
+  "dest_port": 3000,
+  "proto": "TCP",
+  "pkt_src": "wire",
+  "ip_v": 4,
+  "metadata": {
+    "flowbits": [],
+    "protocol": "TCP"
+  },
+  "alert": {
+    "action": "allowed",
+    "gid": 1,
+    "signature_id": 1000001,
+    "rev": 1,
+    "signature": "NOVASTRA LAB Kali to EMP01 TCP/3000 activity",
+    "category": "Novastra Laboratory Detection",
+    "severity": 1
+  },
+  "direction": "to_server",
+  "flow": {
+    "pkts_toserver": 1,
+    "pkts_toclient": 0,
+    "bytes_toserver": 60,
+    "bytes_toclient": 0,
+    "start": "2026-09-01T19:15:42.183921+0530"
+  }
+}
